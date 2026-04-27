@@ -1,10 +1,11 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Params = { slug: string };
 type TopPeriod = "week" | "month" | "all";
 type AlertMode = "all" | "donation" | "tiktok_donation";
+type AnimationPreset = "soft-pop" | "slide-up" | "slide-left" | "fade-in" | "bounce" | "shake" | "none";
 
 type TopDonorRow = { donorName: string; totalUah: number };
 type DonationRow = {
@@ -22,7 +23,20 @@ type WidgetViewConfig = {
   minUah: number | null;
   maxUah: number | null;
   gifUrl: string;
+  soundUrl: string;
   transparent: boolean;
+  animationPreset: AnimationPreset;
+  displayMs: number;
+};
+
+const ANIMATION_CSS: Record<AnimationPreset, string> = {
+  "soft-pop": "animate-[softPop_0.5s_cubic-bezier(0.34,1.56,0.64,1)]",
+  "slide-up": "animate-[slideUp_0.5s_ease-out]",
+  "slide-left": "animate-[slideLeft_0.5s_ease-out]",
+  "fade-in": "animate-[fadeIn_0.6s_ease]",
+  bounce: "animate-[bounce_0.6s_ease]",
+  shake: "animate-[shake_0.5s_ease]",
+  none: "",
 };
 
 function parseMode(value: string | null): AlertMode {
@@ -31,18 +45,44 @@ function parseMode(value: string | null): AlertMode {
   return "all";
 }
 
+function parseAnimationPreset(value: string | null): AnimationPreset {
+  const valid: AnimationPreset[] = ["soft-pop", "slide-up", "slide-left", "fade-in", "bounce", "shake", "none"];
+  if (value && valid.includes(value as AnimationPreset)) return value as AnimationPreset;
+  return "soft-pop";
+}
+
 export default function WidgetPage({ params }: { params: Params }) {
   const [items, setItems] = useState<TopDonorRow[] | DonationRow[] | BattleData | null>(null);
   const [topPeriod, setTopPeriod] = useState<TopPeriod>("all");
   const [feedMode, setFeedMode] = useState<AlertMode>("all");
   const [activeAlert, setActiveAlert] = useState<DonationRow | null>(null);
   const [shownAlertId, setShownAlertId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [viewConfig, setViewConfig] = useState<WidgetViewConfig>({
     minUah: null,
     maxUah: null,
     gifUrl: "",
+    soundUrl: "",
     transparent: true,
+    animationPreset: "soft-pop",
+    displayMs: 9000,
   });
+
+  const playSound = useCallback((url: string) => {
+    if (!url) return;
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      const audio = new Audio(url);
+      audio.volume = 0.8;
+      audioRef.current = audio;
+      void audio.play().catch(() => {});
+    } catch {
+      // ignore audio errors in widget
+    }
+  }, []);
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
@@ -53,14 +93,20 @@ export default function WidgetPage({ params }: { params: Params }) {
     const minUah = search.get("minUah");
     const maxUah = search.get("maxUah");
     const gifUrl = search.get("gif") || "";
+    const soundUrl = search.get("sound") || "";
     const transparent = search.get("transparent") !== "0";
     const mode = parseMode(search.get("mode"));
+    const animationPreset = parseAnimationPreset(search.get("animation"));
+    const displayMs = Number(search.get("displayMs")) || 9000;
 
     setViewConfig({
       minUah: minUah != null ? Number(minUah) : null,
       maxUah: maxUah != null ? Number(maxUah) : null,
       gifUrl,
+      soundUrl,
       transparent,
+      animationPreset,
+      displayMs,
     });
 
     if (params.slug === "top-donors") setTopPeriod(period);
@@ -152,14 +198,18 @@ export default function WidgetPage({ params }: { params: Params }) {
     setActiveAlert(newest);
     setShownAlertId(newest.id);
 
+    if (viewConfig.soundUrl) {
+      playSound(viewConfig.soundUrl);
+    }
+
     const timer = window.setTimeout(() => {
       setActiveAlert(null);
-    }, 9000);
+    }, viewConfig.displayMs || 9000);
 
     return () => {
       window.clearTimeout(timer);
     };
-  }, [params.slug, filteredRows, shownAlertId]);
+  }, [params.slug, filteredRows, shownAlertId, viewConfig.soundUrl, viewConfig.displayMs, playSound]);
 
   function setAlertMode(mode: AlertMode) {
     setFeedMode(mode);
@@ -243,7 +293,7 @@ export default function WidgetPage({ params }: { params: Params }) {
         </div>
 
         {activeAlert ? (
-          <div className="widget-item border-amber-300/40 bg-black/45 shadow-[0_0_25px_rgba(245,158,11,0.25)]">
+          <div className={`widget-item border-amber-300/40 bg-black/45 shadow-[0_0_25px_rgba(245,158,11,0.25)] ${ANIMATION_CSS[viewConfig.animationPreset] || ""}`}>
             {activeAlert.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={activeAlert.imageUrl} alt="tiktok donation" className="mb-2 h-24 w-24 object-contain" />
@@ -281,7 +331,7 @@ export default function WidgetPage({ params }: { params: Params }) {
     return (
       <main className={containerClass}>
         {activeAlert ? (
-          <div className="widget-item border-amber-300/40 bg-black/45 shadow-[0_0_25px_rgba(245,158,11,0.25)]">
+          <div className={`widget-item border-amber-300/40 bg-black/45 shadow-[0_0_25px_rgba(245,158,11,0.25)] ${ANIMATION_CSS[viewConfig.animationPreset] || ""}`}>
             {viewConfig.gifUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={viewConfig.gifUrl} alt="gif" className="mb-2 h-24 w-24 object-contain" />
@@ -302,7 +352,7 @@ export default function WidgetPage({ params }: { params: Params }) {
     return (
       <main className={containerClass}>
         {activeAlert ? (
-          <div className="widget-item border-amber-300/40 bg-black/45 shadow-[0_0_25px_rgba(245,158,11,0.25)]">
+          <div className={`widget-item border-amber-300/40 bg-black/45 shadow-[0_0_25px_rgba(245,158,11,0.25)] ${ANIMATION_CSS[viewConfig.animationPreset] || ""}`}>
             {activeAlert.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={activeAlert.imageUrl} alt="tiktok donation" className="mb-2 h-24 w-24 object-contain" />

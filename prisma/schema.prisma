@@ -47,6 +47,8 @@ model Connection {
   rconPassword   String   @default("")
   cryptobotToken String   @default("")
   monobankJarUrl String   @default("")
+  monobankToken  String   @default("")
+  monobankJarId  String   @default("")
   tonAddress     String   @default("")
   bridgeEnabled  Boolean  @default(true)
   updatedAt      DateTime @updatedAt

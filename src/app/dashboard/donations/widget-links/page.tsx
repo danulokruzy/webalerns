@@ -163,6 +163,16 @@ function defaultsFor(slug: string) {
   } satisfies WidgetSettings;
 }
 
+const ANIMATION_PRESETS = [
+  { id: "soft-pop", label: "Плавне збільшення" },
+  { id: "slide-up", label: "Знизу вгору" },
+  { id: "slide-left", label: "Зліва" },
+  { id: "fade-in", label: "Появлення" },
+  { id: "bounce", label: "Стрибок" },
+  { id: "shake", label: "Тремтіння" },
+  { id: "none", label: "Без анімації" },
+];
+
 export default function WidgetsPage() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [selected, setSelected] = useState("last-donations");
@@ -171,6 +181,7 @@ export default function WidgetsPage() {
   const [active, setActive] = useState(true);
   const [message, setMessage] = useState("");
   const [origin, setOrigin] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const selectedSlot = useMemo(() => slotBySlug(selected), [selected]);
 
@@ -207,6 +218,13 @@ export default function WidgetsPage() {
     const params = new URLSearchParams();
     if (settings.transparent) params.set("transparent", "1");
     if (settings.gifUrl?.trim()) params.set("gif", settings.gifUrl.trim());
+    if (settings.soundUrl?.trim()) params.set("sound", settings.soundUrl.trim());
+    if (settings.animationPreset && settings.animationPreset !== "soft-pop") {
+      params.set("animation", settings.animationPreset);
+    }
+    if (settings.displayMs && settings.displayMs !== 9000) {
+      params.set("displayMs", String(settings.displayMs));
+    }
 
     if (selected === "top-donors" && settings.period) {
       params.set("period", settings.period);
@@ -702,14 +720,62 @@ export default function WidgetsPage() {
               Прозорий фон віджета
             </label>
 
-            <label className="text-sm md:col-span-2">
-              <span className="mb-1 block text-amber-50/75">JSON налаштування (розширено)</span>
-              <textarea
-                value={settingsText}
-                onChange={(e) => setSettingsText(e.target.value)}
-                className="h-56 w-full rounded-xl border border-white/15 bg-black/30 p-3 font-mono text-xs outline-none focus:border-amber-300/70"
-              />
-            </label>
+            {isAlertWidget ? (
+              <>
+                <p className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-200/80">
+                  Анімація
+                </p>
+                <label className="text-sm">
+                  <span className="mb-1 block text-amber-50/75">Тип анімації</span>
+                  <select
+                    value={parsedSettings.animationPreset || "soft-pop"}
+                    onChange={(e) => patchSettings({ animationPreset: e.target.value })}
+                    className="input-dark"
+                  >
+                    {ANIMATION_PRESETS.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm">
+                  <span className="mb-1 block text-amber-50/75">Ліміт записів</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={Number(parsedSettings.limit || 30)}
+                    onChange={(e) => patchSettings({ limit: Number(e.target.value) || 30 })}
+                    className="input-dark"
+                  />
+                </label>
+                <label className="text-sm md:col-span-2 flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(parsedSettings.includeFake ?? true)}
+                    onChange={(e) => patchSettings({ includeFake: e.target.checked })}
+                  />
+                  Включати фейк-донати в стрічку
+                </label>
+              </>
+            ) : null}
+
+            <div className="md:col-span-2">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="text-xs text-amber-200/60 hover:text-amber-200/90 transition"
+              >
+                {showAdvanced ? "Сховати JSON" : "Показати JSON (для розробників)"}
+              </button>
+              {showAdvanced ? (
+                <textarea
+                  value={settingsText}
+                  onChange={(e) => setSettingsText(e.target.value)}
+                  className="mt-2 h-40 w-full rounded-xl border border-white/15 bg-black/30 p-3 font-mono text-xs outline-none focus:border-amber-300/70"
+                />
+              ) : null}
+            </div>
           </div>
 
           <button

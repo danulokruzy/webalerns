@@ -29,6 +29,39 @@ function buildUahUrl(input: PaymentProviderInput, settings: PaymentSettings) {
   return `${base}${divider}amount=${input.amountOriginal}&comment=${encodeURIComponent(input.checkCode)}`;
 }
 
+export async function createCryptobotInvoice(
+  input: PaymentProviderInput,
+  token: string
+): Promise<string> {
+  try {
+    const response = await fetch("https://pay.crypt.bot/api/createInvoice", {
+      method: "POST",
+      headers: {
+        "Crypto-Pay-API-Token": token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        asset: "USDT",
+        amount: String(input.amountOriginal),
+        description: `Донат від ${input.donorName}`,
+        payload: input.checkCode,
+        allow_comments: true,
+        allow_anonymous: false,
+      }),
+    });
+    const data = (await response.json()) as {
+      ok?: boolean;
+      result?: { bot_invoice_url?: string; pay_url?: string };
+    };
+    if (data.ok && data.result) {
+      return data.result.bot_invoice_url || data.result.pay_url || "https://t.me/CryptoBot";
+    }
+  } catch {
+    // fallback to static URL
+  }
+  return "https://t.me/CryptoBot";
+}
+
 function buildCryptobotUrl(input: PaymentProviderInput, settings: PaymentSettings) {
   const base = settings.cryptobotUsdtUrl?.trim();
   if (!base) return "https://t.me/CryptoBot";

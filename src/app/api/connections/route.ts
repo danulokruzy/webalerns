@@ -31,6 +31,8 @@ export async function POST(request: Request) {
         rconPassword?: string;
         cryptobotToken?: string;
         monobankJarUrl?: string;
+        monobankToken?: string;
+        monobankJarId?: string;
         tonAddress?: string;
         bridgeEnabled?: boolean;
       }
@@ -55,6 +57,8 @@ export async function POST(request: Request) {
       rconPassword: body?.rconPassword?.trim() ?? current.rconPassword,
       cryptobotToken: body?.cryptobotToken?.trim() ?? current.cryptobotToken,
       monobankJarUrl: body?.monobankJarUrl?.trim() ?? current.monobankJarUrl,
+      monobankToken: body?.monobankToken?.trim() ?? current.monobankToken,
+      monobankJarId: body?.monobankJarId?.trim() ?? current.monobankJarId,
       tonAddress: body?.tonAddress?.trim() ?? current.tonAddress,
       bridgeEnabled:
         typeof body?.bridgeEnabled === "boolean" ? body.bridgeEnabled : current.bridgeEnabled,
