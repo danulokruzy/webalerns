@@ -33,6 +33,7 @@ export async function POST(request: Request) {
         monobankJarUrl?: string;
         monobankToken?: string;
         monobankJarId?: string;
+        monobankCardNumber?: string;
         tonAddress?: string;
         bridgeEnabled?: boolean;
       }
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
       monobankJarUrl: body?.monobankJarUrl?.trim() ?? current.monobankJarUrl,
       monobankToken: body?.monobankToken?.trim() ?? current.monobankToken,
       monobankJarId: body?.monobankJarId?.trim() ?? current.monobankJarId,
+      monobankCardNumber: body?.monobankCardNumber?.trim() ?? current.monobankCardNumber,
       tonAddress: body?.tonAddress?.trim() ?? current.tonAddress,
       bridgeEnabled:
         typeof body?.bridgeEnabled === "boolean" ? body.bridgeEnabled : current.bridgeEnabled,

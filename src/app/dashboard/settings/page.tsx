@@ -12,6 +12,7 @@ type ConnectionsData = {
   monobankToken: string;
   monobankJarId: string;
   monobankJarUrl: string;
+  monobankCardNumber: string;
   bridgeEnabled: boolean;
 };
 
@@ -67,6 +68,7 @@ export default function SettingsPage() {
         monobankToken: connJson.data.monobankToken || "",
         monobankJarId: connJson.data.monobankJarId || "",
         monobankJarUrl: connJson.data.monobankJarUrl || "",
+        monobankCardNumber: connJson.data.monobankCardNumber || "",
         bridgeEnabled: Boolean(connJson.data.bridgeEnabled),
       });
     }
@@ -101,6 +103,7 @@ export default function SettingsPage() {
           monobankToken: connections.monobankToken,
           monobankJarId: connections.monobankJarId,
           monobankJarUrl: connections.monobankJarUrl,
+          monobankCardNumber: connections.monobankCardNumber,
           bridgeEnabled: connections.bridgeEnabled,
         }),
       }),
@@ -175,6 +178,15 @@ export default function SettingsPage() {
                   onChange={(e) => setConnections({ ...connections, monobankJarUrl: e.target.value })}
                   className="input-dark"
                   placeholder="https://send.monobank.ua/jar/..."
+                />
+              </label>
+              <label className="text-sm md:col-span-2">
+                <span className="mb-1 block text-amber-50/65">Номер карти (показується на сторінці чеку)</span>
+                <input
+                  value={connections.monobankCardNumber}
+                  onChange={(e) => setConnections({ ...connections, monobankCardNumber: e.target.value })}
+                  className="input-dark"
+                  placeholder="4874 1000 2550 7644"
                 />
               </label>
 
