@@ -95,9 +95,12 @@ const providers: Record<PaymentChannel, PaymentProvider> = {
   UAH: {
     channel: PAYMENT_CHANNEL.UAH,
     createCheckUrl: buildUahUrl,
-    async verifyPayment({ checkCode, comment }) {
+    async verifyPayment({ checkCode, comment, amountObserved }) {
       if ((comment || "").toUpperCase().includes(checkCode.toUpperCase())) {
         return { success: true, matchType: "code" };
+      }
+      if (typeof amountObserved === "number" && amountObserved > 0) {
+        return { success: true, matchType: "amount_time" };
       }
       return { success: false, matchType: "unknown" };
     },

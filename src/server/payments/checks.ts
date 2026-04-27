@@ -304,6 +304,36 @@ async function resolveCheck(payload: VerifyPayload): Promise<CheckResolveResult>
   return { check: null, source: "none" };
 }
 
+async function ensureUniqueUahAmount(baseAmount: number): Promise<number> {
+  // Check if the exact amount is already taken by a pending UAH check
+  const existing = await prisma.donationCheck.count({
+    where: {
+      status: CHECK_STATUS.PENDING,
+      channel: PAYMENT_CHANNEL.UAH,
+      amountOriginal: baseAmount,
+    },
+  });
+  if (existing === 0) return baseAmount;
+
+  // Amount is taken — try small offsets (±0.01 to ±0.99)
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const offset = (Math.floor(Math.random() * 99) + 1) / 100;
+    const sign = Math.random() < 0.5 ? -1 : 1;
+    const candidate = Math.round((baseAmount + sign * offset) * 100) / 100;
+    if (candidate <= 0) continue;
+    const taken = await prisma.donationCheck.count({
+      where: {
+        status: CHECK_STATUS.PENDING,
+        channel: PAYMENT_CHANNEL.UAH,
+        amountOriginal: candidate,
+      },
+    });
+    if (taken === 0) return candidate;
+  }
+  // Extremely unlikely fallback — just use base amount
+  return baseAmount;
+}
+
 export async function createDonationCheck(input: CreateCheckInput) {
   await expireOldChecks();
   const donorName = input.donorName.trim();
@@ -350,14 +380,20 @@ export async function createDonationCheck(input: CreateCheckInput) {
     }
   }
 
+  // For UAH: ensure unique amount among pending checks (add kopecks if needed)
+  let finalAmount = amount;
+  if (channel === PAYMENT_CHANNEL.UAH) {
+    finalAmount = await ensureUniqueUahAmount(amount);
+  }
+
   const rates = await getRates();
-  const amountUah = convertToUah(amount, input.channel, rates);
+  const amountUah = convertToUah(finalAmount, input.channel, rates);
   const code = generateCheckCode(settings.paymentMemoPrefix || "DON");
   const provider = getPaymentProvider(channel);
   let payUrl = provider.createCheckUrl(
     {
       channel,
-      amountOriginal: amount,
+      amountOriginal: finalAmount,
       checkCode: code,
       donorName,
     },
@@ -373,10 +409,20 @@ export async function createDonationCheck(input: CreateCheckInput) {
     const token = conn?.cryptobotToken?.trim();
     if (token) {
       payUrl = await createCryptobotInvoice(
-        { channel, amountOriginal: amount, checkCode: code, donorName },
+        { channel, amountOriginal: finalAmount, checkCode: code, donorName },
         token
       );
     }
+  }
+
+  // For UAH, fetch card number to include in metadata
+  let cardNumber = "";
+  if (channel === PAYMENT_CHANNEL.UAH) {
+    const conn = await prisma.connection.findFirst({
+      orderBy: { updatedAt: "desc" },
+      select: { monobankCardNumber: true },
+    });
+    cardNumber = conn?.monobankCardNumber?.trim() || "";
   }
 
   const check = await prisma.donationCheck.create({
@@ -387,9 +433,10 @@ export async function createDonationCheck(input: CreateCheckInput) {
       message: input.message?.trim() || "",
       youtubeUrl: input.youtubeUrl?.trim() || null,
       voiceUrl: input.voiceUrl?.trim() || null,
-      amountOriginal: amount,
-      amountLabel: amountLabel(channel, amount),
+      amountOriginal: finalAmount,
+      amountLabel: amountLabel(channel, finalAmount),
       amountUah,
+      metaJson: cardNumber ? JSON.stringify({ cardNumber }) : null,
       payUrl,
       status: CHECK_STATUS.PENDING,
       expiresAt: new Date(Date.now() + CHECK_LIFETIME_MS),

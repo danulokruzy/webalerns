@@ -17,6 +17,7 @@ type CheckData = {
   payUrl: string;
   status: "PENDING" | "PAID" | "CANCELLED" | "EXPIRED";
   expiresAt: string;
+  metaJson: string | null;
 };
 
 function formatRemaining(ms: number) {
@@ -274,29 +275,70 @@ export default function CheckPage({ params }: { params: { id: string } }) {
                 Скасувати (назад)
               </button>
 
-              {/* Code Instructions for UAH */}
-              {check.channel === "UAH" && showButtons && (
-                <div className="mt-4 rounded-xl border border-amber-300/25 bg-amber-400/8 p-4">
-                  <p className="text-sm font-semibold text-amber-200">Важливо!</p>
-                  <p className="mt-1 text-sm text-amber-50/70">
-                    При оплаті через Monobank обов&apos;язково вкажіть код чека у коментарі до переказу:
-                  </p>
-                  <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-300/30 bg-black/30 px-4 py-3">
-                    <span className="font-mono text-lg font-bold text-amber-200">{check.code}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(check.code);
-                        setInfoMessage("Код скопійовано!");
-                        setIsError(false);
-                      }}
-                      className="ml-auto rounded-lg border border-white/15 px-2 py-1 text-xs hover:bg-white/10"
-                    >
-                      Копіювати
-                    </button>
+              {/* Payment Instructions for UAH */}
+              {check.channel === "UAH" && showButtons && (() => {
+                const meta = check.metaJson ? JSON.parse(check.metaJson) as { cardNumber?: string } : null;
+                const cardNumber = meta?.cardNumber || "";
+                return (
+                  <div className="mt-4 space-y-3">
+                    {cardNumber && (
+                      <div className="rounded-xl border border-amber-300/25 bg-amber-400/8 p-4">
+                        <p className="text-sm font-semibold text-amber-200">Номер карти</p>
+                        <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-300/30 bg-black/30 px-4 py-3">
+                          <span className="font-mono text-lg font-bold text-amber-200">{cardNumber}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(cardNumber.replace(/\s/g, ""));
+                              setInfoMessage("Номер карти скопійовано!");
+                              setIsError(false);
+                            }}
+                            className="ml-auto rounded-lg border border-white/15 px-2 py-1 text-xs hover:bg-white/10"
+                          >
+                            Копіювати
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="rounded-xl border border-emerald-400/25 bg-emerald-500/8 p-4">
+                      <p className="text-sm font-semibold text-emerald-200">Сума до сплати</p>
+                      <p className="mt-1 text-sm text-amber-50/70">
+                        Відправте <span className="font-bold text-emerald-200">рівно {check.amountOriginal} грн</span> — система автоматично зарахує ваш донат.
+                      </p>
+                      <div className="mt-2 flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-black/30 px-4 py-3">
+                        <span className="font-mono text-2xl font-bold text-emerald-200">{check.amountOriginal} грн</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(String(check.amountOriginal));
+                            setInfoMessage("Суму скопійовано!");
+                            setIsError(false);
+                          }}
+                          className="ml-auto rounded-lg border border-white/15 px-2 py-1 text-xs hover:bg-white/10"
+                        >
+                          Копіювати
+                        </button>
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <p className="text-xs text-amber-50/50">
+                        Або вкажіть код <span className="font-mono font-bold text-amber-200">{check.code}</span> у коментарі до переказу — тоді сума може бути будь-якою.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(check.code);
+                          setInfoMessage("Код скопійовано!");
+                          setIsError(false);
+                        }}
+                        className="mt-2 rounded-lg border border-white/15 px-3 py-1.5 text-xs hover:bg-white/10"
+                      >
+                        Копіювати код
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Status */}
               <div className="mt-4 flex items-center gap-2">

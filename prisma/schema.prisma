@@ -46,9 +46,10 @@ model Connection {
   minecraftPort  Int      @default(25575)
   rconPassword   String   @default("")
   cryptobotToken String   @default("")
-  monobankJarUrl String   @default("")
-  monobankToken  String   @default("")
-  monobankJarId  String   @default("")
+  monobankJarUrl    String   @default("")
+  monobankToken     String   @default("")
+  monobankJarId     String   @default("")
+  monobankCardNumber String  @default("")
   tonAddress     String   @default("")
   bridgeEnabled  Boolean  @default(true)
   updatedAt      DateTime @updatedAt
