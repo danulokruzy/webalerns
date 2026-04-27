@@ -1,3 +1,4 @@
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { ensureBootstrap } from "@/server/bootstrap";
 import { fail, ok } from "@/server/http";
 import { verifyDonation } from "@/server/payments/checks";
@@ -111,10 +112,60 @@ function parseWebhookPayload(raw: unknown) {
   };
 }
 
+async function getCryptobotToken(): Promise<string> {
+  const connection = await prisma.connection.findFirst({
+    orderBy: { updatedAt: "desc" },
+    select: { cryptobotToken: true },
+  });
+  return connection?.cryptobotToken?.trim() || "";
+}
+
+function verifyCryptobotSignature(
+  apiToken: string,
+  rawBody: string,
+  signatureHeader: string
+): boolean {
+  if (!apiToken || !signatureHeader) return false;
+  const secret = createHash("sha256").update(apiToken).digest();
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  try {
+    return timingSafeEqual(
+      Buffer.from(expected, "hex"),
+      Buffer.from(signatureHeader, "hex")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   await ensureBootstrap();
 
-  const body = await request.json().catch(() => null);
+  const rawBody = await request.text().catch(() => "");
+  const signatureHeader = request.headers.get("crypto-pay-api-signature") || "";
+
+  const apiToken = await getCryptobotToken();
+  if (apiToken && signatureHeader) {
+    if (!verifyCryptobotSignature(apiToken, rawBody, signatureHeader)) {
+      await prisma.eventLog.create({
+        data: {
+          type: "PAYMENT",
+          message: "CryptoBot webhook: невірний підпис. Запит відхилено.",
+        },
+      });
+      return fail("Невірний підпис webhook.", 403);
+    }
+  } else if (apiToken && !signatureHeader) {
+    await prisma.eventLog.create({
+      data: {
+        type: "PAYMENT",
+        message: "CryptoBot webhook: відсутній заголовок підпису.",
+      },
+    });
+    return fail("Відсутній підпис webhook.", 403);
+  }
+
+  const body = rawBody ? JSON.parse(rawBody) : null;
   const payload = parseWebhookPayload(body);
 
   if (!payload) {

@@ -8,6 +8,10 @@ type ConnectionsData = {
   minecraftHost: string;
   minecraftPort: number;
   rconPassword: string;
+  cryptobotToken: string;
+  monobankToken: string;
+  monobankJarId: string;
+  monobankJarUrl: string;
   bridgeEnabled: boolean;
 };
 
@@ -59,6 +63,10 @@ export default function SettingsPage() {
         minecraftHost: connJson.data.minecraftHost || "",
         minecraftPort: Number(connJson.data.minecraftPort || 0),
         rconPassword: connJson.data.rconPassword || "",
+        cryptobotToken: connJson.data.cryptobotToken || "",
+        monobankToken: connJson.data.monobankToken || "",
+        monobankJarId: connJson.data.monobankJarId || "",
+        monobankJarUrl: connJson.data.monobankJarUrl || "",
         bridgeEnabled: Boolean(connJson.data.bridgeEnabled),
       });
     }
@@ -89,6 +97,10 @@ export default function SettingsPage() {
           minecraftHost: connections.minecraftHost,
           minecraftPort: connections.minecraftPort,
           rconPassword: connections.rconPassword,
+          cryptobotToken: connections.cryptobotToken,
+          monobankToken: connections.monobankToken,
+          monobankJarId: connections.monobankJarId,
+          monobankJarUrl: connections.monobankJarUrl,
           bridgeEnabled: connections.bridgeEnabled,
         }),
       }),
@@ -133,6 +145,53 @@ export default function SettingsPage() {
         </section>
       ) : (
         <>
+          <section className="dashboard-card p-5">
+            <h2 className="mb-4 text-lg font-semibold">Платіжні інтеграції</h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              <p className="md:col-span-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-200/80">Monobank</p>
+              <label className="text-sm md:col-span-2">
+                <span className="mb-1 block text-amber-50/65">Monobank API токен (X-Token)</span>
+                <input
+                  type="password"
+                  value={connections.monobankToken}
+                  onChange={(e) => setConnections({ ...connections, monobankToken: e.target.value })}
+                  className="input-dark"
+                  placeholder="Токен з api.monobank.ua"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-amber-50/65">ID рахунку / банки (опціонально)</span>
+                <input
+                  value={connections.monobankJarId}
+                  onChange={(e) => setConnections({ ...connections, monobankJarId: e.target.value })}
+                  className="input-dark"
+                  placeholder="ID рахунку з webhook"
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-amber-50/65">URL банки (send.monobank.ua)</span>
+                <input
+                  value={connections.monobankJarUrl}
+                  onChange={(e) => setConnections({ ...connections, monobankJarUrl: e.target.value })}
+                  className="input-dark"
+                  placeholder="https://send.monobank.ua/jar/..."
+                />
+              </label>
+
+              <p className="md:col-span-2 mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-200/80">CryptoBot / Crypto Pay</p>
+              <label className="text-sm md:col-span-2">
+                <span className="mb-1 block text-amber-50/65">CryptoBot API токен</span>
+                <input
+                  type="password"
+                  value={connections.cryptobotToken}
+                  onChange={(e) => setConnections({ ...connections, cryptobotToken: e.target.value })}
+                  className="input-dark"
+                  placeholder="Токен з @CryptoBot"
+                />
+              </label>
+            </div>
+          </section>
+
           <section className="dashboard-card p-5">
             <h2 className="mb-4 text-lg font-semibold">Інтеграції ядра</h2>
             <div className="grid gap-3 md:grid-cols-2">
