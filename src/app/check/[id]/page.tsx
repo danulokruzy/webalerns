@@ -239,7 +239,7 @@ export default function CheckPage({ params }: { params: { id: string } }) {
               )}
 
               {/* Action Buttons */}
-              <div className="mt-5 grid gap-2 sm:grid-cols-3">
+              <div className="mt-5 grid grid-cols-2 gap-2">
                 <a
                   href={showButtons ? check.payUrl : "#"}
                   target="_blank"
@@ -247,13 +247,14 @@ export default function CheckPage({ params }: { params: { id: string } }) {
                   onClick={(e) => {
                     if (!showButtons) e.preventDefault();
                   }}
-                  className={`flex h-12 items-center justify-center rounded-xl text-sm font-semibold transition ${
+                  className={`flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
                     showButtons
                       ? "bg-gradient-to-r from-amber-400 to-amber-500 text-[#2b1d13] shadow-lg shadow-amber-500/20 hover:from-amber-300 hover:to-amber-400"
                       : "border border-white/10 bg-black/20 text-amber-50/40"
                   }`}
                 >
                   Оплатити
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
                 <button
                   type="button"
@@ -263,26 +264,15 @@ export default function CheckPage({ params }: { params: { id: string } }) {
                 >
                   Перевірити
                 </button>
-                <button
-                  type="button"
-                  onClick={cancelCheckAndBack}
-                  disabled={processing}
-                  className="flex h-12 items-center justify-center rounded-xl border border-red-400/30 bg-red-500/10 text-sm text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
-                >
-                  Скасувати (назад)
-                </button>
               </div>
-
-              {showButtons && (
-                <button
-                  type="button"
-                  onClick={cancelCheckAndBack}
-                  disabled={processing}
-                  className="mt-2 w-full rounded-xl border border-amber-300/30 bg-amber-400/10 py-2.5 text-sm text-amber-200 transition hover:bg-amber-400/15 disabled:opacity-50"
-                >
-                  Закрити чек
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={cancelCheckAndBack}
+                disabled={processing}
+                className="mt-2 flex h-12 w-full items-center justify-center rounded-xl border border-red-400/30 bg-red-500/10 text-sm text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
+              >
+                Скасувати (назад)
+              </button>
 
               {/* Code Instructions for UAH */}
               {check.channel === "UAH" && showButtons && (

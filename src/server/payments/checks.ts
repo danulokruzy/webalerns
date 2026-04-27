@@ -1,7 +1,7 @@
 import type { DonationCheck } from "@prisma/client";
 import { prisma } from "@/server/prisma";
 import { CHECK_LIFETIME_MS } from "@/server/constants";
-import { amountLabel, getPaymentProvider, normalizeAmountToUahStep } from "@/server/payments/providers";
+import { amountLabel, getPaymentProvider, normalizeAmountToUahStep, createCryptobotInvoice } from "@/server/payments/providers";
 import { convertToUah, getRates } from "@/server/rates";
 import { runMatchedActions } from "@/server/actions/engine";
 import { CHECK_STATUS, MATCH_TYPE, PAYMENT_CHANNEL, type PaymentChannel } from "@/server/domain";
@@ -354,7 +354,7 @@ export async function createDonationCheck(input: CreateCheckInput) {
   const amountUah = convertToUah(amount, input.channel, rates);
   const code = generateCheckCode(settings.paymentMemoPrefix || "DON");
   const provider = getPaymentProvider(channel);
-  const payUrl = provider.createCheckUrl(
+  let payUrl = provider.createCheckUrl(
     {
       channel,
       amountOriginal: amount,
@@ -363,6 +363,21 @@ export async function createDonationCheck(input: CreateCheckInput) {
     },
     settings
   );
+
+  // For CRYPTOBOT, create a real invoice via Crypto Pay API
+  if (channel === PAYMENT_CHANNEL.CRYPTOBOT) {
+    const conn = await prisma.connection.findFirst({
+      orderBy: { updatedAt: "desc" },
+      select: { cryptobotToken: true },
+    });
+    const token = conn?.cryptobotToken?.trim();
+    if (token) {
+      payUrl = await createCryptobotInvoice(
+        { channel, amountOriginal: amount, checkCode: code, donorName },
+        token
+      );
+    }
+  }
 
   const check = await prisma.donationCheck.create({
     data: {
