@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Custom Widget Template</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0);
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           LIQUID GLASS EFFECTS - основные стили
+           ═══════════════════════════════════════════════════════ */
+
+        .liquid-glass {
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(18px) saturate(200%) brightness(1.1);
+            -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.1);
+            border: 1.5px solid rgba(255, 255, 255, 0.40);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.28),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.52),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.10);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .liquid-glass::before {
+            content: '';
+            position: absolute;
+            top: 8px; left: 14%;
+            width: 72%; height: 36%;
+            border-radius: 50% 50% 0 0;
+            background: rgba(255,255,255,0.20);
+            filter: blur(4px);
+            pointer-events: none;
+        }
+
+        /* Вариация: более тёмное стекло */
+        .liquid-glass-dark {
+            background: rgba(0, 0, 0, 0.40);
+            backdrop-filter: blur(15px) saturate(180%) brightness(0.95);
+            -webkit-backdrop-filter: blur(15px) saturate(180%) brightness(0.95);
+            border: 1px solid rgba(255, 255, 255, 0.30);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.40);
+        }
+
+        /* Вариация: цветное стекло (используй --glass-color) */
+        .liquid-glass-colored {
+            background: var(--glass-color, rgba(100, 150, 255, 0.15));
+            backdrop-filter: blur(16px) saturate(190%) hue-rotate(0deg);
+            -webkit-backdrop-filter: blur(16px) saturate(190%);
+            border: 1.5px solid rgba(255, 255, 255, 0.35);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.25),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.50);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           КОМПОНЕНТЫ ВИДЖЕТА
+           ═══════════════════════════════════════════════════════ */
+
+        .widget-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .widget-card {
+            padding: 30px 40px;
+            border-radius: 15px;
+            text-align: center;
+            min-width: 300px;
+        }
+
+        .widget-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .widget-value {
+            font-size: 48px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           ПРОГРЕСС-БАР С ЖИДКИМ СТЕКЛОМ
+           ═══════════════════════════════════════════════════════ */
+
+        .progress-wrapper {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 16px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, 
+                rgba(100, 200, 255, 0.8) 0%,
+                rgba(150, 220, 255, 1) 50%,
+                rgba(100, 200, 255, 0.8) 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(100, 200, 255, 0.8);
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           КРУГЛЫЕ ИКОНКИ (ЖИДКОЕ СТЕКЛО)
+           ═══════════════════════════════════════════════════════ */
+
+        .icon-wrapper {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .glass-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-circle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        .glass-circle img {
+            width: 70%;
+            height: 70%;
+            object-fit: contain;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           ТАЙМЕР С ЖИДКИМ СТЕКЛОМ
+           ═══════════════════════════════════════════════════════ */
+
+        .timer-display {
+            font-size: 48px;
+            font-weight: bold;
+            padding: 20px 40px;
+            border-radius: 12px;
+            min-width: 200px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
+            animation: pulse-timer 1s infinite alternate;
+        }
+
+        @keyframes pulse-timer {
+            0% { text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8); }
+            100% { text-shadow: 2px 2px 12px rgba(100, 200, 255, 0.8); }
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           УВЕДОМЛЕНИЯ И АЛЕРТЫ
+           ═══════════════════════════════════════════════════════ */
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px 30px;
+            border-radius: 12px;
+            min-width: 250px;
+            animation: slideIn 0.5s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            background: rgba(76, 175, 80, 0.15);
+            border: 1.5px solid rgba(76, 175, 80, 0.5);
+        }
+
+        .notification.warning {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1.5px solid rgba(255, 193, 7, 0.5);
+        }
+
+        .notification.error {
+            background: rgba(244, 67, 54, 0.15);
+            border: 1.5px solid rgba(244, 67, 54, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-container">
+        <div class="liquid-glass widget-card">
+            <div class="widget-title">Custom Widget</div>
+            <div class="widget-value" id="mainValue">0</div>
+        </div>
+
+        <div class="progress-wrapper">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div class="icon-wrapper">
+            <div class="liquid-glass glass-circle">
+                <span id="icon1">🔥</span>
+            </div>
+            <div class="liquid-glass-dark glass-circle">
+                <span id="icon2">✨</span>
+            </div>
+            <div class="liquid-glass-colored glass-circle" style="--glass-color: rgba(255, 100, 150, 0.15);">
+                <span id="icon3">💎</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API URL - меняй на своего хоста
+        const API_BASE = window.location.origin || 'http://localhost:5000';
+
+        class CustomWidget {
+            constructor() {
+                this.updateInterval = 500; // мс
+                this.maxValue = 100;
+                this.currentValue = 0;
+                this.init();
+            }
+
+            init() {
+                this.startUpdating();
+                this.setupEventListeners();
+            }
+
+            startUpdating() {
+                setInterval(() => this.update(), this.updateInterval);
+            }
+
+            async update() {
+                try {
+                    // Получить данные с API
+                    const response = await fetch(`${API_BASE}/api/widget`);
+                    const data = await response.json();
+
+                    this.updateDisplay(data);
+                } catch (error) {
+                    console.error('Widget update error:', error);
+                }
+            }
+
+            updateDisplay(data) {
+                // Обновить таймер
+                if (data.timer_text) {
+                    let timerEl = document.querySelector('.timer-display');
+                    if (!timerEl) {
+                        timerEl = document.createElement('div');
+                        timerEl.className = 'liquid-glass timer-display';
+                        document.querySelector('.widget-container').insertBefore(
+                            timerEl,
+                            document.querySelector('.progress-wrapper')
+                        );
+                    }
+                    timerEl.textContent = data.timer_text;
+                }
+
+                // Обновить прогресс
+                if (data.left_percent !== undefined) {
+                    document.getElementById('progressFill').style.width = data.left_percent + '%';
+                }
+
+                // Обновить значение
+                const total = (data.rose_count || 0) + (data.tiktok_count || 0);
+                document.getElementById('mainValue').textContent = total;
+            }
+
+            setupEventListeners() {
+                // Слушать кастомные события от OBS
+                window.addEventListener('customWidgetEvent', (e) => {
+                    console.log('Custom event:', e.detail);
+                });
+            }
+
+            showNotification(message, type = 'info') {
+                const notif = document.createElement('div');
+                notif.className = `notification ${type}`;
+                notif.textContent = message;
+                document.body.appendChild(notif);
+
+                setTimeout(() => notif.remove(), 3000);
+            }
+        }
+
+        // Инициализировать виджет при загрузке
+        window.addEventListener('load', () => {
+            window.widget = new CustomWidget();
+        });
+    </script>
+</body>
+</html>

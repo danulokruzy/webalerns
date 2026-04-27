@@ -1,0 +1,35 @@
+{
+  "plugin_info": {
+    "name": "TikTok OBS Plugin",
+    "version": "1.0.0",
+    "author": "DanulO",
+    "description": "Интеграция TikTok Live с OBS Studio через кастомные виджеты",
+    "repository": "https://github.com/DanulO/TikTok-OBS-Plugin"
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 5000,
+    "protocol": "http",
+    "ssl": false
+  },
+  "tiktok": {
+    "username": "danulo.kruz",
+    "auto_connect": false,
+    "reconnect_attempts": 5
+  },
+  "widgets": {
+    "enabled": true,
+    "auto_refresh": true,
+    "refresh_interval": 100,
+    "default_width": 1920,
+    "default_height": 1080
+  },
+  "scenes": {
+    "auto_create": true,
+    "default_scene": "Main Stream"
+  },
+  "logging": {
+    "level": "info",
+    "file": "plugin.log"
+  }
+}

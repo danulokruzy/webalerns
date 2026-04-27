@@ -1,0 +1,24 @@
+{
+  "progress": {
+    "name": "Progress Bar",
+    "route": "/prog",
+    "description": "Прогресс-бар с таймером TikTok",
+    "enabled": true,
+    "config": {
+      "width": 1920,
+      "height": 1080,
+      "update_interval": 100
+    }
+  },
+  "vip": {
+    "name": "VIP Widget",
+    "route": "/vip",
+    "description": "VIP уведомления",
+    "enabled": true,
+    "config": {
+      "width": 1920,
+      "height": 1080,
+      "update_interval": 500
+    }
+  }
+}

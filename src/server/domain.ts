@@ -1,0 +1,62 @@
+export const PAYMENT_CHANNEL = {
+  UAH: "UAH",
+  CRYPTOBOT: "CRYPTOBOT",
+  TONPAY: "TONPAY",
+} as const;
+
+export const CHECK_STATUS = {
+  PENDING: "PENDING",
+  PAID: "PAID",
+  CANCELLED: "CANCELLED",
+  EXPIRED: "EXPIRED",
+} as const;
+
+export const ACTION_TYPE = {
+  MINECRAFT_COMMAND: "MINECRAFT_COMMAND",
+  KEYPRESS: "KEYPRESS",
+  SOUND: "SOUND",
+  VIDEO: "VIDEO",
+  WEBHOOK: "WEBHOOK",
+  OBS_ACTION: "OBS_ACTION",
+} as const;
+
+export const TRIGGER_TYPE = {
+  AMOUNT_UAH: "AMOUNT_UAH",
+  TIKTOK_DONATION: "TIKTOK_DONATION",
+  CHAT_COMMAND: "CHAT_COMMAND",
+  LIKE_COUNT: "LIKE_COUNT",
+  SUBSCRIBE: "SUBSCRIBE",
+} as const;
+
+export const MATCH_TYPE = {
+  CODE: "CODE",
+  AMOUNT_TIME: "AMOUNT_TIME",
+  CRYPTO_TX: "CRYPTO_TX",
+  MANUAL: "MANUAL",
+  UNKNOWN: "UNKNOWN",
+} as const;
+
+export const LOG_TYPE = {
+  SYSTEM: "SYSTEM",
+  CHECK: "CHECK",
+  DONATION: "DONATION",
+  ACTION: "ACTION",
+  FAKE: "FAKE",
+  BRIDGE: "BRIDGE",
+  PAYMENT: "PAYMENT",
+} as const;
+
+export const MEDIA_TYPE = {
+  AUDIO: "AUDIO",
+  VIDEO: "VIDEO",
+} as const;
+
+export const TASK_STATUS = {
+  PENDING: "PENDING",
+  RUNNING: "RUNNING",
+  DONE: "DONE",
+  FAILED: "FAILED",
+  CANCELED: "CANCELED",
+} as const;
+
+export type PaymentChannel = (typeof PAYMENT_CHANNEL)[keyof typeof PAYMENT_CHANNEL];

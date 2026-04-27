@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Donation - Донаты Виджет</title>
+    <style>
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0);
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .donation-card {
+            backdrop-filter: blur(18px) saturate(200%) brightness(1.1);
+            -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.1);
+            background: rgba(255, 255, 255, 0.13);
+            border: 1.5px solid rgba(255, 255, 255, 0.40);
+            border-radius: 16px;
+            padding: 30px 40px;
+            text-align: center;
+            min-width: 350px;
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .donation-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .donation-name {
+            font-size: 32px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+            margin-bottom: 15px;
+        }
+
+        .donation-amount {
+            font-size: 56px;
+            font-weight: bold;
+            background: linear-gradient(45deg, rgb(255, 200, 100), rgb(255, 150, 100));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(255, 150, 100, 0.6);
+            margin: 20px 0;
+        }
+
+        .donation-time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 10px;
+        }
+
+        .donation-total {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 20px 30px;
+            backdrop-filter: blur(15px) saturate(180%) brightness(0.95);
+            -webkit-backdrop-filter: blur(15px) saturate(180%) brightness(0.95);
+            background: rgba(0, 0, 0, 0.40);
+            border: 1px solid rgba(255, 255, 255, 0.30);
+            border-radius: 12px;
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .total-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+        }
+
+        .total-amount {
+            font-size: 32px;
+            color: rgb(100, 200, 255);
+        }
+
+        .recent-list {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            max-width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .recent-item {
+            background: rgba(255, 200, 100, 0.1);
+            border: 1px solid rgba(255, 200, 100, 0.4);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #fff;
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        .recent-item strong {
+            color: rgb(255, 200, 100);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="donation-total">
+        <div class="total-label">ВСЕГО СОБРАНО</div>
+        <div class="total-amount" id="totalAmount">$0.00</div>
+    </div>
+
+    <div class="donation-card" id="donationCard" style="display: none;">
+        <div class="donation-label">🎁 Новый донат</div>
+        <div class="donation-name" id="donorName">-</div>
+        <div class="donation-amount" id="donationAmount">$0.00</div>
+        <div class="donation-time" id="donationTime">-</div>
+    </div>
+
+    <div class="recent-list" id="recentList"></div>
+
+    <script>
+        const API_BASE = window.location.origin || 'http://localhost:5000';
+
+        class DonationWidget {
+            constructor() {
+                this.donations = [];
+                this.totalAmount = 0;
+                this.currentDonation = null;
+                this.showDuration = 5000;
+                this.simulateDonations();
+                this.updateDisplay();
+            }
+
+            addDonation(name, amount) {
+                const donation = {
+                    name,
+                    amount,
+                    timestamp: new Date()
+                };
+
+                this.donations.unshift(donation);
+                this.totalAmount += amount;
+
+                this.showDonation(donation);
+                this.updateTotal();
+                this.updateRecentList();
+
+                // Keep only last 10
+                if (this.donations.length > 10) {
+                    this.donations.pop();
+                }
+            }
+
+            showDonation(donation) {
+                const card = document.getElementById('donationCard');
+                document.getElementById('donorName').textContent = donation.name;
+                document.getElementById('donationAmount').textContent = `$${donation.amount.toFixed(2)}`;
+
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('donationTime').textContent = timeStr;
+
+                card.style.display = 'block';
+
+                setTimeout(() => {
+                    card.style.display = 'none';
+                }, this.showDuration);
+            }
+
+            updateTotal() {
+                document.getElementById('totalAmount').textContent = `$${this.totalAmount.toFixed(2)}`;
+            }
+
+            updateRecentList() {
+                const list = document.getElementById('recentList');
+                list.innerHTML = '';
+
+                this.donations.slice(0, 5).forEach(donation => {
+                    const div = document.createElement('div');
+                    div.className = 'recent-item';
+                    div.innerHTML = `<strong>${donation.name}</strong><br>$${donation.amount.toFixed(2)}`;
+                    list.appendChild(div);
+                });
+            }
+
+            updateDisplay() {
+                this.updateTotal();
+                this.updateRecentList();
+            }
+
+            simulateDonations() {
+                const names = ['DanulO', 'XpnK', 'VideoLover', 'StreamFan', 'ChampStrike'];
+                const amounts = [1.99, 4.99, 9.99, 19.99, 49.99, 99.99];
+
+                // Случайный донат каждые 8-15 секунд
+                setInterval(() => {
+                    const name = names[Math.floor(Math.random() * names.length)];
+                    const amount = amounts[Math.floor(Math.random() * amounts.length)];
+                    this.addDonation(name, amount);
+                }, 8000 + Math.random() * 7000);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            window.donation = new DonationWidget();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model PaymentSettings {
+  id                 String   @id @default(cuid())
+  uahPaymentUrl      String   @default("")
+  cryptobotUsdtUrl   String   @default("")
+  tonPayUrl          String   @default("")
+  tonReceiverAddress String   @default("")
+  tonNetwork         String   @default("mainnet")
+  minAmountUah       Float    @default(1)
+  maxAmountUah       Float    @default(10000)
+  paymentMemoPrefix  String   @default("DON")
+  confirmationMode   String   @default("semi_auto")
+  usdtToUahFallback  Float    @default(40)
+  tonToUahFallback   Float    @default(250)
+  updatedAt          DateTime @updatedAt
+}
+
+model Connection {
+  id             String   @id @default(cuid())
+  twitchUsername String   @default("")
+  tiktokUsername String   @default("")
+  minecraftHost  String   @default("")
+  minecraftPort  Int      @default(25575)
+  rconPassword   String   @default("")
+  cryptobotToken String   @default("")
+  monobankJarUrl String   @default("")
+  tonAddress     String   @default("")
+  bridgeEnabled  Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+}
+
+model MediaAsset {
+  id           String   @id @default(cuid())
+  type         String
+  originalName String
+  fileName     String
+  relativePath String
+  mimeType     String
+  sizeBytes    Int
+  durationSec  Int?
+  createdAt    DateTime @default(now())
+  actions      Action[]
+}
+
+model Action {
+  id               String   @id @default(cuid())
+  title            String
+  description      String   @default("")
+  enabled          Boolean  @default(true)
+  actionType       String
+  payload          String
+  fixedDelaySec    Int?
+  randomDelayMinSec Int?
+  randomDelayMaxSec Int?
+  cooldownSec      Int      @default(0)
+  mediaAssetId     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  mediaAsset       MediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  triggers         ActionTrigger[]
+  bridgeTasks      BridgeTask[]
+}
+
+model ActionTrigger {
+  id               String   @id @default(cuid())
+  actionId         String
+  type             String
+  enabled          Boolean  @default(true)
+  amountUah        Float?
+  giftName         String?
+  giftCoins        Int?
+  commandText      String?
+  likeCount        Int?
+  requireExactLike Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  action           Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
+}
+
+model GiftCatalog {
+  id         String   @id @default(cuid())
+  provider   String   @default("tiktok")
+  giftId     String   @unique
+  name       String
+  coins      Int
+  imageUrl   String?
+  firstSeenAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+}
+
+model DonationCheck {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  channel        String
+  donorName      String
+  message        String
+  youtubeUrl     String?
+  voiceUrl       String?
+  amountOriginal Float
+  amountLabel    String
+  amountUah      Float
+  payUrl         String
+  status         String   @default("PENDING")
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  verifiedAt     DateTime?
+  cancelledAt    DateTime?
+  metaJson       String?
+  donation       Donation?
+  paymentMatches PaymentMatch[]
+
+  @@index([status, expiresAt])
+  @@index([channel, amountOriginal, status])
+}
+
+model Donation {
+  id                   String   @id @default(cuid())
+  checkId              String?  @unique
+  donorName            String
+  message              String
+  channel              String
+  amountOriginal       Float
+  amountLabel          String
+  amountUah            Float
+  isAnonymous          Boolean  @default(false)
+  isFake               Boolean  @default(false)
+  youtubeUrl           String?
+  voiceUrl             String?
+  triggeredActionsJson String?
+  createdAt            DateTime @default(now())
+  check                DonationCheck? @relation(fields: [checkId], references: [id], onDelete: SetNull)
+  paymentMatches       PaymentMatch[]
+
+  @@index([createdAt])
+}
+
+model PaymentMatch {
+  id                String   @id @default(cuid())
+  checkId           String?
+  donationId        String?
+  type              String
+  success           Boolean  @default(false)
+  provider          String?
+  transactionRef    String?
+  comment           String?
+  amountObservedUah Float?
+  observedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  check             DonationCheck? @relation(fields: [checkId], references: [id], onDelete: SetNull)
+  donation          Donation? @relation(fields: [donationId], references: [id], onDelete: SetNull)
+}
+
+model FakeDonation {
+  id        String   @id @default(cuid())
+  donorName String
+  amountUah Float
+  message   String
+  battleTag String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model FakeDonationConfig {
+  id              String  @id @default(cuid())
+  enabled         Boolean @default(false)
+  name1           String  @default("Настя")
+  name2           String  @default("Влад")
+  minPauseSec     Int     @default(10)
+  maxPauseSec     Int     @default(60)
+  minAmountUah    Float   @default(10)
+  maxAmountUah    Float   @default(500)
+  messages        String  @default("[\"Донат!\",\"Підтримка стріму\",\"Слава Україні!\",\"Вперед!\",\"Круто!\"]")
+  updatedAt       DateTime @updatedAt
+}
+
+model WidgetPreset {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  settingsJson String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model EventLog {
+  id          String   @id @default(cuid())
+  type        String
+  message     String
+  payloadJson String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model BridgeClient {
+  id         String   @id @default(cuid())
+  machineName String
+  tokenHash  String   @unique
+  enabled    Boolean  @default(true)
+  lastSeenAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  tasks      BridgeTask[]
+}
+
+model BridgeTask {
+  id            String   @id @default(cuid())
+  clientId      String?
+  actionId      String?
+  type          String
+  payloadJson   String
+  status        String   @default("PENDING")
+  runAt         DateTime @default(now())
+  attempts      Int      @default(0)
+  resultMessage String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  executedAt    DateTime?
+  client        BridgeClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  action        Action? @relation(fields: [actionId], references: [id], onDelete: SetNull)
+
+  @@index([status, runAt])
+}

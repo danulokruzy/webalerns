@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <title>Gauge - Радиус Виджет</title>
+    <style>
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0);
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+
+        svg {
+            filter: drop-shadow(0 0 20px rgba(100, 200, 255, 0.6));
+        }
+
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+
+        .gauge-label {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="gauge-container">
+        <svg viewBox="0 0 200 200" width="300" height="300">
+            <!-- Фоновый круг -->
+            <circle cx="100" cy="100" r="90" fill="none" 
+                    stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
+            
+            <!-- Основной прогресс -->
+            <circle cx="100" cy="100" r="85" fill="none"
+                    stroke="url(#gradientArc)" stroke-width="8"
+                    stroke-dasharray="0 534" stroke-linecap="round"
+                    id="progressArc" transform="rotate(-90 100 100)"/>
+            
+            <!-- Градиент -->
+            <defs>
+                <linearGradient id="gradientArc" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="rgb(100, 200, 255)"/>
+                    <stop offset="50%" stop-color="rgb(150, 220, 255)"/>
+                    <stop offset="100%" stop-color="rgb(100, 200, 255)"/>
+                </linearGradient>
+            </defs>
+
+            <!-- Маркеры -->
+            <circle cx="100" cy="20" r="4" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="180" cy="100" r="4" fill="rgba(255,255,255,0.5)"/>
+            <circle cx="100" cy="180" r="4" fill="rgba(255,255,255,0.5)"/>
+        </svg>
+        <div class="gauge-value" id="gaugeValue">0%</div>
+        <div class="gauge-label">Прогресс</div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin || 'http://localhost:5000';
+        let targetValue = 0;
+        let currentValue = 0;
+
+        class GaugeWidget {
+            constructor() {
+                this.arc = document.getElementById('progressArc');
+                this.valueDisplay = document.getElementById('gaugeValue');
+                this.startUpdating();
+            }
+
+            startUpdating() {
+                setInterval(() => this.update(), 200);
+            }
+
+            async update() {
+                try {
+                    const response = await fetch(`${API_BASE}/api/widget`);
+                    const data = await response.json();
+                    
+                    targetValue = data.left_percent || 0;
+                    this.animate();
+                } catch (error) {
+                    console.error('Update error:', error);
+                }
+            }
+
+            animate() {
+                currentValue += (targetValue - currentValue) * 0.1;
+                const circumference = 2 * Math.PI * 85;
+                const offset = circumference * (1 - currentValue / 100);
+                
+                this.arc.style.strokeDasharray = `${circumference - offset} ${offset}`;
+                this.valueDisplay.textContent = Math.round(currentValue) + '%';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            window.gauge = new GaugeWidget();
+        });
+    </script>
+</body>
+</html>

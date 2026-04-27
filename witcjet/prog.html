@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Progress Widget</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0);
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .container {
+            display: flex;
+            width: 100%; height: 100%;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ── Timer rectangle (moved up 30% and scaled 1.4×) ── */
+        #timer {
+            position: relative;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.60);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            padding: 8px 25px;
+            border-radius: 10px;
+            font-size: 34px; /* ~24 * 1.4 */
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.55);
+            box-shadow: 0 8px 28px rgba(0,0,0,0.38),
+                        inset 0 1px 0 rgba(255,255,255,0.25);
+            min-width: 154px; /* ~110 * 1.4 */
+            text-align: center;
+            align-self: center;
+            margin-top: 0;
+            transform: translateY(-30%);
+        }
+
+        /* ── Full row: circle | bar | circle ── */
+        .bar-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 92%;
+            gap: 18px;
+        }
+
+        /* ── Liquid-glass icon side ── */
+        .icon-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* ── Liquid-glass circle ── */
+        .icon-circle {
+            width: 132px;
+            height: 132px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(18px) saturate(200%) brightness(1.1);
+            -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.1);
+            border: 1.5px solid rgba(255, 255, 255, 0.40);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.28),
+                inset 0 1.5px 0 rgba(255, 255, 255, 0.52),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.10),
+                inset 0 0 0 1px rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        /* top glare highlight */
+        .icon-circle::before {
+            content: '';
+            position: absolute;
+            top: 8px; left: 14%;
+            width: 72%; height: 36%;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.20);
+            filter: blur(4px);
+            pointer-events: none;
+        }
+        .icon-circle img {
+            width: 87px; height: 87px;
+            object-fit: contain;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.55));
+            transition: transform 120ms ease;
+            position: relative; z-index: 1;
+        }
+
+        /* ── Count rectangle (same visual language as timer) ── */
+        .count-badge {
+            background: rgba(0, 0, 0, 0.60);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            padding: 6px 16px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.55);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.38),
+                        inset 0 1px 0 rgba(255,255,255,0.25);
+            min-width: 90px;
+            text-align: center;
+        }
+
+        /* ── Progress bar ── */
+        .bar-container {
+            position: relative;
+            flex: 1;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 30px;
+            display: flex;
+            overflow: hidden;
+            border: 3px solid black;
+        }
+        .center-line {
+            position: absolute;
+            left: 50%; top: 0;
+            width: 4px; height: 100%;
+            background: white;
+            transform: translateX(-50%);
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #left-bar {
+            height: 100%;
+            background: #ff4d4d;
+            transition: width 0.5s ease;
+        }
+        #right-bar {
+            height: 100%;
+            background: #4d94ff;
+            transition: width 0.5s ease;
+        }
+
+        /* ── Animations ── */
+        .pop-rose { animation: popRose 700ms cubic-bezier(.2,.8,.2,1); }
+        @keyframes popRose {
+            0%   { transform: translateY(0)    rotate(0)     scale(1);    }
+            18%  { transform: translateY(-22px) rotate(-20deg) scale(1.25); }
+            40%  { transform: translateY(0)    rotate(18deg)  scale(1.05); }
+            62%  { transform: translateY(-10px) rotate(-8deg) scale(1.12); }
+            100% { transform: translateY(0)    rotate(0)     scale(1);    }
+        }
+        .pop-tiktok { animation: popTiktok 560ms cubic-bezier(.2,.8,.2,1); }
+        @keyframes popTiktok {
+            0%   { transform: translateY(0)    rotate(0)    scale(1);    }
+            20%  { transform: translateY(-14px) rotate(6deg)  scale(1.18); }
+            40%  { transform: translateY(0)    rotate(-6deg) scale(1.02); }
+            60%  { transform: translateY(-8px) rotate(4deg)  scale(1.08); }
+            80%  { transform: translateY(0)    rotate(-2deg) scale(1.03); }
+            100% { transform: translateY(0)    rotate(0)    scale(1);    }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="bar-row">
+            <!-- Rose side -->
+            <div class="icon-side">
+                <div class="icon-circle">
+                    <img id="img-left" src="/images/rose.png" alt="rose"
+                         onerror="this.style.display='none'; document.getElementById('fb-left').style.display='block'" />
+                    <span id="fb-left" style="display:none;font-size:42px;position:relative;z-index:1">🌹</span>
+                </div>
+                <div class="count-badge" id="count-left">0</div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="bar-container">
+                <div class="center-line"></div>
+                <div id="left-bar" style="width: 50%"></div>
+                <div id="right-bar" style="width: 50%"></div>
+            </div>
+
+            <!-- TikTok side -->
+            <div class="icon-side">
+                <div class="icon-circle">
+                    <img id="img-right" src="/images/tiktok.png" alt="tiktok"
+                         onerror="this.style.display='none'; document.getElementById('fb-right').style.display='block'" />
+                    <span id="fb-right" style="display:none;font-size:42px;position:relative;z-index:1">🎁</span>
+                </div>
+                <div class="count-badge" id="count-right">0</div>
+            </div>
+        </div>
+
+        <div id="timer">05:00</div>
+    </div>
+    <script>
+        /* Track previous counts to detect new gifts */
+        let prevRose = 0;
+        let prevTiktok = 0;
+
+        /* Add animation class and remove after it ends; type: 'rose' | 'tiktok' */
+        function triggerPop(el, type) {
+            if (!el) return;
+            // remove both possible classes
+            el.classList.remove('pop-rose');
+            el.classList.remove('pop-tiktok');
+            /* force reflow */
+            void el.offsetWidth;
+            const cls = (type === 'rose') ? 'pop-rose' : 'pop-tiktok';
+            el.classList.add(cls);
+            el.addEventListener('animationend', function handler() {
+                el.classList.remove(cls);
+                el.removeEventListener('animationend', handler);
+            });
+        }
+
+        function updateWidget() {
+            fetch('/api/widget')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('left-bar').style.width = data.left_percent + '%';
+                    document.getElementById('right-bar').style.width = data.right_percent + '%';
+                    // update count badges
+                    const countLeft = document.getElementById('count-left');
+                    const countRight = document.getElementById('count-right');
+                    if (countLeft) countLeft.innerText = data.rose_count;
+                    if (countRight) countRight.innerText = data.tiktok_count;
+                    document.getElementById('timer').innerText = data.timer_text;
+
+                    if (data.is_paused) {
+                        document.getElementById('timer').style.color = '#ffff00';
+                    } else {
+                        document.getElementById('timer').style.color = '#ffffff';
+                    }
+
+                    /* Trigger animations on new gifts */
+                    if (data.rose_count > prevRose) {
+                        const img = document.getElementById('img-left');
+                        triggerPop(img, 'rose');
+                    }
+                    if (data.tiktok_count > prevTiktok) {
+                        const img = document.getElementById('img-right');
+                        triggerPop(img, 'tiktok');
+                    }
+
+                    prevRose = data.rose_count;
+                    prevTiktok = data.tiktok_count;
+                });
+        }
+
+        /* URL input removed by request */
+
+        setInterval(updateWidget, 1000);
+        updateWidget();
+    </script>
+</body>
+</html>

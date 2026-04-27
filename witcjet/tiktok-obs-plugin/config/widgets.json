@@ -1,0 +1,79 @@
+{
+  "widgets": [
+    {
+      "id": "progress",
+      "name": "Progress Bar",
+      "file": "progress.html",
+      "route": "/progress",
+      "description": "Прогресс-бар с таймером TikTok Live",
+      "default_width": 1920,
+      "default_height": 1080,
+      "enabled": true,
+      "properties": {
+        "show_timer": true,
+        "show_counters": true,
+        "liquid_glass": true
+      }
+    },
+    {
+      "id": "gauge",
+      "name": "Circular Gauge",
+      "file": "gauge.html",
+      "route": "/gauge",
+      "description": "Круглый gauge с жидким стеклом эффектом",
+      "default_width": 600,
+      "default_height": 600,
+      "enabled": true,
+      "properties": {
+        "show_percentage": true,
+        "animate": true,
+        "gradient": true
+      }
+    },
+    {
+      "id": "chat",
+      "name": "Live Chat",
+      "file": "chat.html",
+      "route": "/chat",
+      "description": "Live chat с уведомлениями о подарках",
+      "default_width": 400,
+      "default_height": 600,
+      "enabled": true,
+      "properties": {
+        "max_messages": 50,
+        "show_avatars": false,
+        "auto_scroll": true
+      }
+    },
+    {
+      "id": "donation",
+      "name": "Donation Tracker",
+      "file": "donation.html",
+      "route": "/donation",
+      "description": "Отслеживание донатов и лидербордов",
+      "default_width": 1920,
+      "default_height": 1080,
+      "enabled": true,
+      "properties": {
+        "show_total": true,
+        "show_recent": true,
+        "duration": 5000
+      }
+    },
+    {
+      "id": "vip",
+      "name": "VIP Alerts",
+      "file": "vip.html",
+      "route": "/vip",
+      "description": "VIP пользователи и специальные события",
+      "default_width": 1920,
+      "default_height": 1080,
+      "enabled": true,
+      "properties": {
+        "show_animation": true,
+        "alert_duration": 3000
+      }
+    }
+  ],
+  "total": 5
+}
